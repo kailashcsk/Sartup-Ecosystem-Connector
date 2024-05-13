@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String                 @id @default(uuid())
+  email                String                 @unique
+  password             String
+  name                 String
+  role                 String                 @default("FOUNDER")
+  profileImage         String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  menteeships          Mentorship[]           @relation("MentorshipAsMentee")
+  mentorships          Mentorship[]           @relation("MentorshipAsMentor")
+  partnerships         Partnership[]
+  startups             Startup[]
+  startupTeams         StartupTeam[]
+  userConnections      UserConnection[]       @relation("UserConnections")
+  connectedUsers       UserConnection[]       @relation("ConnectedUsers")
+  posts                UserPost[]
+  attributes           UserAttribute[]
+  feedRecommendations  UserFeedRecommendation[]
+}
+
+model Startup {
+  id           String        @id @default(uuid())
+  name         String
+  description  String
+  logo         String?
+  industry     String
+  stage        String
+  foundedDate  DateTime
+  website      String?
+  socialMedia  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  founderId    String
+  funding      Funding[]
+  mentorships  Mentorship[]
+  partnerships Partnership[]
+  founder      User          @relation(fields: [founderId], references: [id])
+  team         StartupTeam[]
+}
+
+model StartupTeam {
+  id        String   @id @default(uuid())
+  startupId String
+  userId    String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  startup   Startup  @relation(fields: [startupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Funding {
+  id         String   @id @default(uuid())
+  startupId  String
+  amount     Float
+  valuation  Float
+  date       DateTime
+  investorId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  startup    Startup  @relation(fields: [startupId], references: [id])
+}
+
+model Mentorship {
+  id        String   @id @default(uuid())
+  mentorId  String
+  menteeId  String
+  startupId String?
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  mentee    User     @relation("MentorshipAsMentee", fields: [menteeId], references: [id])
+  mentor    User     @relation("MentorshipAsMentor", fields: [mentorId], references: [id])
+  startup   Startup? @relation(fields: [startupId], references: [id])
+}
+
+model Partnership {
+  id          String   @id @default(uuid())
+  startupId   String
+  partnerId   String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  partner     User     @relation(fields: [partnerId], references: [id])
+  startup     Startup  @relation(fields: [startupId], references: [id])
+}
+
+model UserConnection {
+  id              String   @id @default(uuid())
+  userId          String
+  connectedUserId String
+  connectionType  String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation("UserConnections", fields: [userId], references: [id])
+  connectedUser   User     @relation("ConnectedUsers", fields: [connectedUserId], references: [id])
+}
+
+model UserPost {
+  id                     String                  @id @default(uuid())
+  userId                 String
+  content                String
+  location               String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  user                   User                    @relation(fields: [userId], references: [id])
+  feedRecommendations    UserFeedRecommendation[]
+}
+
+model UserAttribute {
+  id             String   @id @default(uuid())
+  userId         String
+  attributeKey   String
+  attributeValue String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model UserFeedRecommendation {
+  id               String   @id @default(uuid())
+  userId           String
+  recommendedPostId String
+  score            Float
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id])
+  recommendedPost  UserPost @relation(fields: [recommendedPostId], references: [id])
+}
